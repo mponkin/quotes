@@ -1,0 +1,2 @@
+[workspace]
+members = ["quotes_lib", "quotes_client", "quotes_server"]
