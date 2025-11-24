@@ -130,14 +130,14 @@ impl SingleClientHandler {
                         trace!("Sending {quote} to {address}");
                         let datagram = Datagram::from(ServerMessage::Quote(quote));
                         let buf: Vec<u8> = datagram.into();
-                        if let Err(e) = socket.send_to(&buf, address) {
-                            if let Err(e) = event_tx.send(SingleClientHandlerEvent::Error(
+                        if let Err(io_err) = socket.send_to(&buf, address)
+                            && let Err(send_err) = event_tx.send(SingleClientHandlerEvent::Error(
                                 address,
-                                ServerError::from(e),
-                            )) {
-                                warn!("Unable to send client message {e}");
-                                break;
-                            }
+                                ServerError::from(io_err),
+                            ))
+                        {
+                            warn!("Unable to send client message {send_err}");
+                            break;
                         }
                     }
                     Ok(SingleClientCommand::Stop) => {

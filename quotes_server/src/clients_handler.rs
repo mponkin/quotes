@@ -147,10 +147,10 @@ impl ClientsHandler {
             };
 
             for addr in addr_to_remove {
-                if let Some(client) = guard.remove(addr) {
-                    if let Err(e) = client.stop() {
-                        warn!("Client stop error {e}");
-                    }
+                if let Some(client) = guard.remove(addr)
+                    && let Err(e) = client.stop()
+                {
+                    warn!("Client stop error {e}");
                 }
             }
         }
