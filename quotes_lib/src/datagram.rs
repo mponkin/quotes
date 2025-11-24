@@ -1,6 +1,6 @@
 //! Module for reading and writing messages as datagrams
 
-use crate::{error::QuotesError, server_message::ServerMessage, subscribe_message::PingMessage};
+use crate::{server_message::ServerMessage, subscribe_message::PingMessage};
 
 /// Struct to wrap data as datagrams
 #[derive(Debug, PartialEq, Eq)]
@@ -20,6 +20,11 @@ impl Datagram {
     fn bytes_length(&self) -> usize {
         let data_len = (self.data.len() as u16).to_be_bytes();
         Self::HEADER.len() + data_len.len() + self.data.len()
+    }
+
+    fn seek_header(buf: &[u8]) -> Option<usize> {
+        buf.windows(Self::HEADER.len())
+            .position(|window| window == Self::HEADER)
     }
 }
 
@@ -59,6 +64,7 @@ enum ParseResult {
 impl From<&[u8]> for ParseResult {
     fn from(value: &[u8]) -> Self {
         const DATA_LEN_SIZE: usize = 2;
+
         let mandatory_len = Datagram::HEADER.len() + DATA_LEN_SIZE;
         if value.len() < mandatory_len {
             return ParseResult::NotEnoughBytes;
@@ -101,12 +107,25 @@ impl DatagramParser {
     }
 
     /// Parse datagrams contained in given data
-    pub fn parse(&mut self, data: &[u8]) -> Result<Vec<Datagram>, QuotesError> {
+    /// returns OK(datagrams) if parsed all data successfully or waiting for more data
+    /// return Err(datagrams) if unable to parse some datagram
+    pub fn parse(&mut self, data: &[u8]) -> Result<Vec<Datagram>, Vec<Datagram>> {
         self.buffer.extend_from_slice(data);
 
         let mut datagrams = vec![];
 
         loop {
+            let header_position = Datagram::seek_header(&self.buffer);
+
+            if let Some(index) = header_position {
+                // found header, can throw away everything before it
+                self.buffer.drain(0..index);
+            } else if self.buffer.len() > Datagram::HEADER.len() - 1 {
+                // header not found, throw away everything before last HEADER.len() - 1 bytes so parsing will return NotEnoughBytes
+                self.buffer
+                    .drain(0..self.buffer.len() - (Datagram::HEADER.len() - 1));
+            }
+
             let result = ParseResult::from(self.buffer.as_slice());
             match result {
                 ParseResult::Datagram(datagram) => {
@@ -116,8 +135,15 @@ impl DatagramParser {
                         break;
                     }
                 }
-                ParseResult::NotEnoughBytes => break,
-                ParseResult::Error => return Err(QuotesError::ParseDatagramError),
+                ParseResult::NotEnoughBytes => {
+                    // not enough data to parse, will wait for mode
+                    break;
+                }
+                ParseResult::Error => {
+                    // drain 1 byte to mark current datagram as invalid
+                    self.buffer.drain(0..1);
+                    return Err(datagrams);
+                }
             }
         }
 

@@ -53,7 +53,7 @@ fn main() {
 
 fn run_client() -> Result<(), ClientError> {
     const PING_INTERVAL: Duration = Duration::from_millis(1000);
-    const MAX_ERRORS: usize = 3;
+    const MAX_ERRORS: usize = 5;
     init_logger()?;
     let args = Args::parse();
 
@@ -94,7 +94,10 @@ fn run_client() -> Result<(), ClientError> {
                     }
 
                     match server_message {
-                        ServerMessage::Quote(quote) => info!("{quote}"),
+                        ServerMessage::Quote(quote) => {
+                            error_count = 0;
+                            info!("{quote}")
+                        }
                         ServerMessage::Err(e) => warn!("SERVER ERROR {e}"),
                     }
                 }

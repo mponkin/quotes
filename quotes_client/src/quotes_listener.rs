@@ -45,19 +45,22 @@ impl QuotesListener {
                 match socket.recv_from(&mut buf) {
                     Ok((len, address)) => {
                         let data = datagram_parser.parse(&buf[..len]);
+                        let is_err = data.is_err();
 
-                        let messages = data.map_or_else(
-                            |e| vec![QuotesListenerEvent::from(e)],
-                            |datagrams| {
-                                datagrams
-                                    .into_iter()
-                                    .map(|dg| match ServerMessage::try_from(dg) {
-                                        Ok(msg) => QuotesListenerEvent::Message(msg, address),
-                                        Err(e) => QuotesListenerEvent::from(e),
-                                    })
-                                    .collect()
-                            },
-                        );
+                        let datagrams = data.map_or_else(|dgs| dgs, |dgs| dgs);
+
+                        let mut messages = datagrams
+                            .into_iter()
+                            .map(|dg| match ServerMessage::try_from(dg) {
+                                Ok(msg) => QuotesListenerEvent::Message(msg, address),
+                                Err(e) => QuotesListenerEvent::from(e),
+                            })
+                            .collect::<Vec<_>>();
+
+                        if is_err {
+                            messages
+                                .push(QuotesListenerEvent::from(QuotesError::ParseDatagramError));
+                        }
 
                         for message in messages {
                             if let Err(e) = event_tx.send(message) {
