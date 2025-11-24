@@ -11,7 +11,8 @@ use std::{
 
 use crate::error::QuotesError;
 
-pub mod client_message;
+pub mod subscribe_message;
+pub mod datagram;
 pub mod error;
 pub mod quote;
 pub mod server_message;

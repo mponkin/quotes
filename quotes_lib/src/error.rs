@@ -1,5 +1,8 @@
 //! Quotes lib errors
-use std::num::{ParseFloatError, ParseIntError};
+use std::{
+    fmt::Display,
+    num::{ParseFloatError, ParseIntError},
+};
 
 /// Error variants
 #[derive(Debug)]
@@ -11,7 +14,9 @@ pub enum QuotesError {
     /// Problem parsing client message
     ParseClientMessageError(String),
     /// Problem parsing server message
-    ParseServerMessageError,
+    ParseServerMessageError(String),
+    /// Unable to parse datagram
+    ParseDatagramError,
 }
 
 impl From<ParseFloatError> for QuotesError {
@@ -28,5 +33,23 @@ impl From<ParseIntError> for QuotesError {
 impl From<std::io::Error> for QuotesError {
     fn from(value: std::io::Error) -> Self {
         QuotesError::IoError(value.to_string())
+    }
+}
+
+impl Display for QuotesError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            QuotesError::IoError(reason) => write!(f, "I/O error: {reason}"),
+            QuotesError::ParseQuoteError(reason) => write!(f, "Parse quote error: {reason}"),
+            QuotesError::ParseClientMessageError(reason) => {
+                write!(f, "Parse client message error: {reason}")
+            }
+            QuotesError::ParseServerMessageError(reason) => {
+                write!(f, "Parse server message error: {reason}")
+            }
+            QuotesError::ParseDatagramError => {
+                write!(f, "Unable to parse datagram")
+            }
+        }
     }
 }
