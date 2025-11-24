@@ -11,11 +11,11 @@ use std::{
 
 use crate::error::QuotesError;
 
-pub mod subscribe_message;
 pub mod datagram;
 pub mod error;
 pub mod quote;
 pub mod server_message;
+pub mod subscribe_message;
 
 /// Read tickers list from file, one ticker per line
 pub fn read_tickers_from_file(file: PathBuf) -> Result<Vec<String>, QuotesError> {
