@@ -23,14 +23,15 @@ impl Datagram {
     }
 }
 
-impl Into<Vec<u8>> for Datagram {
-    fn into(self) -> Vec<u8> {
-        let data_len = (self.data.len() as u16).to_be_bytes();
-        let mut buffer = Vec::with_capacity(Self::HEADER.len() + data_len.len() + self.data.len());
+impl From<Datagram> for Vec<u8> {
+    fn from(value: Datagram) -> Self {
+        let data_len = (value.data.len() as u16).to_be_bytes();
+        let mut buffer =
+            Vec::with_capacity(Datagram::HEADER.len() + data_len.len() + value.data.len());
 
-        buffer.extend_from_slice(Self::HEADER);
+        buffer.extend_from_slice(Datagram::HEADER);
         buffer.extend_from_slice(&data_len);
-        buffer.extend_from_slice(&self.data);
+        buffer.extend_from_slice(&value.data);
 
         buffer
     }
@@ -87,6 +88,7 @@ impl From<&[u8]> for ParseResult {
 }
 
 /// Struct to parse datagrams possibly split among multiple messages
+#[derive(Default)]
 pub struct DatagramParser {
     /// leftover partial data from previous read
     buffer: Vec<u8>,
@@ -95,7 +97,7 @@ pub struct DatagramParser {
 impl DatagramParser {
     /// Create new parser
     pub fn new() -> Self {
-        Self { buffer: vec![] }
+        Default::default()
     }
 
     /// Parse datagrams contained in given data
@@ -110,7 +112,7 @@ impl DatagramParser {
                 ParseResult::Datagram(datagram) => {
                     self.buffer.drain(0..datagram.bytes_length());
                     datagrams.push(datagram);
-                    if self.buffer.len() == 0 {
+                    if self.buffer.is_empty() {
                         break;
                     }
                 }
@@ -125,8 +127,6 @@ impl DatagramParser {
 
 mod tests {
     #![allow(unused_imports)]
-    use std::u8;
-
     use super::*;
 
     #[test]

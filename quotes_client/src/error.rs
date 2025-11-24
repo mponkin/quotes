@@ -39,7 +39,7 @@ impl<T> From<crossbeam_channel::SendError<T>> for ClientError {
 }
 impl From<crossbeam_channel::RecvError> for ClientError {
     fn from(value: crossbeam_channel::RecvError) -> Self {
-        ClientError::SendError(value.to_string())
+        ClientError::RecvError(value.to_string())
     }
 }
 

@@ -89,8 +89,8 @@ impl TryFrom<&[u8]> for PingMessage {
     }
 }
 
-impl Into<Vec<u8>> for PingMessage {
-    fn into(self) -> Vec<u8> {
-        Self::HEADER.as_bytes().to_vec()
+impl From<PingMessage> for Vec<u8> {
+    fn from(_: PingMessage) -> Self {
+        PingMessage::HEADER.as_bytes().to_vec()
     }
 }

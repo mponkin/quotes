@@ -40,11 +40,11 @@ impl ServerMessage {
     }
 }
 
-impl Into<Vec<u8>> for ServerMessage {
-    fn into(self) -> Vec<u8> {
+impl From<ServerMessage> for Vec<u8> {
+    fn from(value: ServerMessage) -> Self {
         let mut result = vec![];
-        result.push(self.type_code());
-        result.extend_from_slice(&self.content_bytes());
+        result.push(value.type_code());
+        result.extend_from_slice(&value.content_bytes());
         result
     }
 }

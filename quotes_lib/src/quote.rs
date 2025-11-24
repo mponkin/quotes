@@ -30,16 +30,16 @@ impl Quote {
     const SPLITTER: u8 = b'|';
 }
 
-impl Into<Vec<u8>> for &Quote {
-    fn into(self) -> Vec<u8> {
+impl From<&Quote> for Vec<u8> {
+    fn from(value: &Quote) -> Self {
         let mut data = vec![];
-        data.extend_from_slice(self.ticker.as_bytes());
+        data.extend_from_slice(value.ticker.as_bytes());
         data.push(Quote::SPLITTER);
-        data.extend_from_slice(&self.price.to_be_bytes());
+        data.extend_from_slice(&value.price.to_be_bytes());
         data.push(Quote::SPLITTER);
-        data.extend_from_slice(&self.volume.to_be_bytes());
+        data.extend_from_slice(&value.volume.to_be_bytes());
         data.push(Quote::SPLITTER);
-        data.extend_from_slice(&self.timestamp.to_be_bytes());
+        data.extend_from_slice(&value.timestamp.to_be_bytes());
 
         data
     }
@@ -65,7 +65,7 @@ impl TryFrom<&[u8]> for Quote {
             .collect::<Vec<_>>();
 
         if parts.len() != 4
-            || parts[0].len() < 1
+            || parts[0].is_empty()
             || parts[1].len() != 8
             || parts[2].len() != 4
             || parts[3].len() != 8
@@ -75,7 +75,7 @@ impl TryFrom<&[u8]> for Quote {
             ));
         }
 
-        let ticker_bytes: Vec<u8> = parts[0].iter().copied().collect();
+        let ticker_bytes: Vec<u8> = parts[0].to_vec();
 
         let price_pytes = slice_as_bytes!(parts[1], 8)?;
         let volume_pytes = slice_as_bytes!(parts[2], 4)?;

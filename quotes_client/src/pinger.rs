@@ -92,9 +92,7 @@ impl Pinger {
     pub fn shutdown(self) -> Result<(), ClientError> {
         trace!("Shutting down pinger");
 
-        self.handle
-            .join()
-            .unwrap_or_else(|_| Err(ClientError::ThreadJoin))
+        self.handle.join().unwrap_or(Err(ClientError::ThreadJoin))
     }
 }
 
