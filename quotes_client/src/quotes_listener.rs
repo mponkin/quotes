@@ -47,7 +47,7 @@ impl QuotesListener {
                         let data = datagram_parser.parse(&buf[..len]);
                         let is_err = data.is_err();
 
-                        let datagrams = data.map_or_else(|dgs| dgs, |dgs| dgs);
+                        let datagrams = data.unwrap_or_else(|dgs| dgs);
 
                         let mut messages = datagrams
                             .into_iter()

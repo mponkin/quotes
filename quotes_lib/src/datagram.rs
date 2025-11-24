@@ -140,8 +140,10 @@ impl DatagramParser {
                     break;
                 }
                 ParseResult::Error => {
-                    // drain 1 byte to mark current datagram as invalid
-                    self.buffer.drain(0..1);
+                    if self.buffer.len() >= Datagram::HEADER.len() {
+                        self.buffer.drain(0..Datagram::HEADER.len());
+                    }
+
                     return Err(datagrams);
                 }
             }

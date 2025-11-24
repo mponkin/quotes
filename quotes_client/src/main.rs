@@ -53,7 +53,7 @@ fn main() {
 
 fn run_client() -> Result<(), ClientError> {
     const PING_INTERVAL: Duration = Duration::from_millis(1000);
-    const MAX_ERRORS: usize = 5;
+    const MAX_ERRORS_PER_TICKER: usize = 3;
     init_logger()?;
     let args = Args::parse();
 
@@ -66,6 +66,7 @@ fn run_client() -> Result<(), ClientError> {
     })?;
 
     let tickers = read_tickers_from_file(args.tickers)?;
+    let max_errors = tickers.len() * MAX_ERRORS_PER_TICKER;
     let tcp_stream = setup_connection(args.server_address)?;
 
     debug!("Listenting to UDP socket on port {}", args.port);
@@ -104,7 +105,7 @@ fn run_client() -> Result<(), ClientError> {
                 QuotesListenerEvent::Error(client_error) => {
                     error_count += 1;
                     warn!("Error event({error_count}): {client_error}");
-                    if error_count >= MAX_ERRORS {
+                    if error_count >= max_errors {
                         warn!("Reached MAX_ERRORS, shutting down");
                         break;
                     }
